@@ -23,6 +23,27 @@ enum Role {
   LASARE
 }
 
+enum AnalysisStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+enum FindingCategory {
+  IDENTIFIER
+  CONTACT
+  HEALTH
+  POLITICAL
+  UNION
+  RELIGION
+  BIOMETRIC
+  OTHER_SENSITIVE
+  GENERAL_PERSONAL
+  LOCATION_WORK
+  OTHER
+}
+
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -70,6 +91,7 @@ model User {
   memberships   Membership[]
   auditLogs     AuditLog[]
   documents     Document[] @relation("DocumentUploader")
+  analysisRunsTriggered AnalysisRun[] @relation("AnalysisTriggeredBy")
 }
 
 model Tenant {
@@ -91,6 +113,8 @@ model Tenant {
   cases       Case[]
   documents   Document[]
   auditLogs   AuditLog[]
+  analysisRuns AnalysisRun[]
+  analysisFindings AnalysisFinding[]
 }
 
 model Membership {
@@ -138,9 +162,56 @@ model Document {
   tenant     Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   case       Case?  @relation(fields: [caseId], references: [id], onDelete: SetNull)
   uploadedBy User   @relation("DocumentUploader", fields: [uploadedById], references: [id])
+  analysisRuns AnalysisRun[]
+  analysisFindings AnalysisFinding[]
 
   @@index([tenantId])
   @@index([caseId])
+}
+
+model AnalysisRun {
+  id             String          @id @default(cuid())
+  tenantId       String
+  documentId     String
+  status         AnalysisStatus  @default(PENDING)
+  model          String
+  promptVersion  String
+  summary        String?         @db.Text
+  errorMessage   String?         @db.Text
+  triggeredById  String?
+  createdAt      DateTime        @default(now())
+  completedAt    DateTime?
+
+  tenant      Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  document    Document          @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  triggeredBy User?             @relation("AnalysisTriggeredBy", fields: [triggeredById], references: [id], onDelete: SetNull)
+  findings    AnalysisFinding[]
+
+  @@index([tenantId])
+  @@index([documentId])
+  @@index([createdAt])
+}
+
+model AnalysisFinding {
+  id           String           @id @default(cuid())
+  tenantId     String
+  documentId   String
+  runId        String
+  category     FindingCategory
+  riskScore    Int
+  startOffset  Int
+  endOffset    Int
+  excerpt      String           @db.Text
+  rationale    String           @db.Text
+  gdprHint     String?          @db.Text
+
+  tenant   Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  document Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  run      AnalysisRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([documentId])
+  @@index([runId])
 }
 
 model AuditLog {

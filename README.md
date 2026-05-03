@@ -51,6 +51,20 @@ Detta är **inte** juridisk rådgivning; ansvaret för utlämning och personuppg
    - E-post: `demo@example.com`
    - Lösenord: `demo12345`
 
+## OpenAI — automatisk analys (valfritt)
+
+1. Skapa en API-nyckel i [OpenAI Platform](https://platform.openai.com/api-keys) (organisations- och faktureringskonto enligt er process).
+2. Lägg **endast** i **serverns** `.env` (committa aldrig nyckeln):
+
+   ```env
+   OPENAI_API_KEY="sk-..."
+   # valfritt:
+   OPENAI_MODEL="gpt-4o-mini"
+   ```
+
+3. Kör om appen så att variablerna laddas (`npm run dev` lokalt, eller `sudo systemctl restart gdpr` på er Linux-värd).
+4. I dokumentvyn: **Starta automatisk analys**. Texten skickas till OpenAI — genomför **DPIA** och **biträdesavtal** innan skarp drift med verkliga personuppgifter.
+
 ## Stripe (valfritt)
 
 Fyll i `STRIPE_*` i `.env`. Webhook-ändpunkt: `/api/stripe/webhook` — konfigurera i Stripe Dashboard med samma `STRIPE_WEBHOOK_SECRET`.
