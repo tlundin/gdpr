@@ -44,7 +44,30 @@ async function main() {
     },
   });
 
-  console.log("Seed klar: demo@example.com / demo12345");
+  const janHash = await bcrypt.hash("banan", 12);
+  const janUser = await prisma.user.upsert({
+    where: { email: "jan@example.com" },
+    update: { passwordHash: janHash, name: "Jan" },
+    create: {
+      email: "jan@example.com",
+      name: "Jan",
+      passwordHash: janHash,
+    },
+  });
+
+  await prisma.membership.upsert({
+    where: {
+      userId_tenantId: { userId: janUser.id, tenantId: tenant.id },
+    },
+    update: { role: Role.HANDLAGGARE },
+    create: {
+      userId: janUser.id,
+      tenantId: tenant.id,
+      role: Role.HANDLAGGARE,
+    },
+  });
+
+  console.log("Seed klar: demo@example.com / demo12345 · jan@example.com / banan");
 }
 
 main()
