@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
-import { categoryLabel, riskLabel } from "@/lib/analysis/category-labels";
 import { pickDisplayFindings } from "@/lib/analysis/normalize";
 import { HighlightedDocumentText } from "@/components/HighlightedDocumentText";
 import { prisma } from "@/lib/prisma";
 import { canManageCases } from "@/lib/tenant";
 import { AnalysisPanel } from "./analysis-panel";
+import { FindingList } from "./finding-list";
 import { DecisionNotesForm } from "./notes-form";
 
 export default async function DocumentPage({
@@ -48,14 +48,32 @@ export default async function DocumentPage({
   ]);
 
   const findings = latestSuccess?.findings ?? [];
+  /** Numreringsordning = dokumentets läsordning (position). */
+  const findingsByPosition = [...findings].sort((a, b) => a.startOffset - b.startOffset || a.endOffset - b.endOffset);
+  const numberById = new Map(findingsByPosition.map((f, i) => [f.id, i + 1]));
+
+  const displayedInText = new Set(pickDisplayFindings(findings).map((f) => f.id));
+
   const displaySpans = pickDisplayFindings(findings).map((f) => ({
     id: f.id,
     start: f.startOffset,
     end: f.endOffset,
     riskScore: f.riskScore,
+    label: String(numberById.get(f.id) ?? ""),
   }));
 
   const bodyText = doc.textContent ?? "";
+
+  const findingListItems = findingsByPosition.map((f) => ({
+    id: f.id,
+    number: numberById.get(f.id) ?? 0,
+    category: f.category,
+    riskScore: f.riskScore,
+    rationale: f.rationale,
+    gdprHint: f.gdprHint,
+    excerpt: f.excerpt,
+    shownInExtractedText: displayedInText.has(f.id),
+  }));
 
   return (
     <div className="space-y-8">
@@ -90,21 +108,13 @@ export default async function DocumentPage({
           <p className="mt-1 text-sm text-slate-600">
             Modell {latestSuccess.model} · {latestSuccess.completedAt?.toLocaleString("sv-SE") ?? ""}
           </p>
+          <p className="mt-2 text-sm text-slate-600">
+            Varje rad har samma nummer som{" "}
+            <span className="font-mono text-slate-800">[N]</span> i den extraherade texten nedan. Under «Markerad text»
+            visas exakt den passage modellen avsett.
+          </p>
           {latestSuccess.summary && <p className="mt-3 text-sm text-slate-800">{latestSuccess.summary}</p>}
-          <ul className="mt-4 divide-y divide-slate-200 rounded-lg border border-slate-200">
-            {findings.map((f) => (
-              <li key={f.id} className="px-3 py-3 text-sm">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="font-medium text-slate-900">{categoryLabel(f.category)}</span>
-                  <span className="text-xs text-slate-500">
-                    Risk {f.riskScore}/5 ({riskLabel(f.riskScore)})
-                  </span>
-                </div>
-                <p className="mt-1 text-slate-700">{f.rationale}</p>
-                {f.gdprHint && <p className="mt-1 text-xs text-slate-600">{f.gdprHint}</p>}
-              </li>
-            ))}
-          </ul>
+          <FindingList items={findingListItems} />
         </section>
       )}
 
@@ -113,8 +123,8 @@ export default async function DocumentPage({
           <div>
             <h2 className="text-sm font-semibold text-slate-900">Extraherad text</h2>
             <p className="mt-1 text-sm text-slate-600">
-              Markeringar visar icke-överlappande passager med högst risk först. Kontrollera alltid mot
-              originalet.
+              Markeringar med <span className="font-mono">[N]</span> motsvarar punkten med samma nummer i listan ovan.
+              Vid överlapp visas högst risk; övriga finns kvar som citat i listan.
             </p>
           </div>
           <a
