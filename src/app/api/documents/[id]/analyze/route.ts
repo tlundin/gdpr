@@ -21,6 +21,8 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  const tenantId = session.tenantId;
+
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json(
       { error: "OPENAI_API_KEY är inte satt. Lägg till den i .env på servern." },
@@ -31,7 +33,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
   const { id: documentId } = await context.params;
 
   const doc = await prisma.document.findFirst({
-    where: { id: documentId, tenantId: session.tenantId },
+    where: { id: documentId, tenantId },
   });
 
   if (!doc) {
@@ -47,7 +49,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
 
   const run = await prisma.analysisRun.create({
     data: {
-      tenantId: session.tenantId,
+      tenantId,
       documentId: doc.id,
       status: "RUNNING",
       model,
@@ -57,7 +59,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
   });
 
   await writeAudit({
-    tenantId: session.tenantId,
+    tenantId,
     userId: session.user.id,
     action: "document.analyze.start",
     entityType: "AnalysisRun",
@@ -92,7 +94,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
       for (const n of normalized) {
         await tx.analysisFinding.create({
           data: {
-            tenantId: session.tenantId,
+            tenantId,
             documentId: doc.id,
             runId: run.id,
             category: n.category,
@@ -117,7 +119,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     });
 
     await writeAudit({
-      tenantId: session.tenantId,
+      tenantId,
       userId: session.user.id,
       action: "document.analyze.complete",
       entityType: "AnalysisRun",
@@ -142,7 +144,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     });
 
     await writeAudit({
-      tenantId: session.tenantId,
+      tenantId,
       userId: session.user.id,
       action: "document.analyze.failed",
       entityType: "AnalysisRun",
