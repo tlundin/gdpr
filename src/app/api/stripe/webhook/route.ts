@@ -70,11 +70,12 @@ export async function POST(request: Request) {
       if (!tenant) break;
 
       const active = sub.status === "active" || sub.status === "trialing";
+      const cpe = (sub as unknown as { current_period_end?: number }).current_period_end;
       await prisma.tenant.update({
         where: { id: tenant.id },
         data: {
           stripeSubscriptionId: sub.id,
-          validUntil: active ? new Date(sub.current_period_end * 1000) : new Date(),
+          validUntil: active && typeof cpe === "number" ? new Date(cpe * 1000) : new Date(),
         },
       });
       break;
