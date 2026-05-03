@@ -21,7 +21,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const tenantId = session.tenantId;
+  const tenantId = session.tenantId!;
 
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json(
