@@ -1,0 +1,19 @@
+[Unit]
+Description=GDPR Myndighetsverktyg (Next.js)
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/home/ec2-user/gdpr
+Environment=NODE_ENV=production
+Environment=PORT=3000
+EnvironmentFile=-/home/ec2-user/gdpr/.env
+ExecStart=/usr/bin/npx next start -H 0.0.0.0 -p 3000
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
