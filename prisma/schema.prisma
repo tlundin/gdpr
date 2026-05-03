@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BillingSource {
+  STRIPE
+  INVOICE
+}
+
+enum ProductType {
+  ONE_TIME
+  ANNUAL
+}
+
+enum Role {
+  ADMIN
+  HANDLAGGARE
+  LASARE
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  accounts      Account[]
+  sessions      Session[]
+  memberships   Membership[]
+  auditLogs     AuditLog[]
+  documents     Document[] @relation("DocumentUploader")
+}
+
+model Tenant {
+  id                 String        @id @default(cuid())
+  name               String
+  slug               String        @unique
+  billingSource      BillingSource @default(STRIPE)
+  stripeCustomerId   String?
+  stripeSubscriptionId String?
+  contractReference  String?
+  invoicePaidAt      DateTime?
+  productType        ProductType?
+  seats              Int           @default(5)
+  validUntil         DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  memberships Membership[]
+  cases       Case[]
+  documents   Document[]
+  auditLogs   AuditLog[]
+}
+
+model Membership {
+  id       String @id @default(cuid())
+  userId   String
+  tenantId String
+  role     Role   @default(HANDLAGGARE)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenantId])
+  @@index([tenantId])
+}
+
+model Case {
+  id        String   @id @default(cuid())
+  tenantId  String
+  title     String
+  diaryRef  String?
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  documents Document[]
+
+  @@index([tenantId])
+}
+
+model Document {
+  id               String   @id @default(cuid())
+  tenantId         String
+  caseId           String?
+  title            String
+  originalFilename String
+  mimeType         String
+  storageKey       String
+  textContent      String?  @db.Text
+  decisionNotes    String?  @db.Text
+  uploadedById     String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  tenant     Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  case       Case?  @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  uploadedBy User   @relation("DocumentUploader", fields: [uploadedById], references: [id])
+
+  @@index([tenantId])
+  @@index([caseId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  tenantId   String
+  userId     String?
+  action     String
+  entityType String
+  entityId   String?
+  meta       Json?
+  createdAt  DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([createdAt])
+}

@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gdpr
+      POSTGRES_PASSWORD: gdpr
+      POSTGRES_DB: gdpr_myndighet
+    ports:
+      - "5432:5432"
+    volumes:
+      - gdpr_pgdata:/var/lib/postgresql/data
+
+volumes:
+  gdpr_pgdata:
