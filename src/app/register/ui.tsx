@@ -15,11 +15,14 @@ export function RegisterForm() {
     setError(null);
 
     const form = e.currentTarget;
+    const fd = new FormData(form);
+    const nameRaw = String(fd.get("name") ?? "").trim();
+    const orgRaw = String(fd.get("organization") ?? "").trim();
     const body = {
-      email: String(form.email.value).trim(),
-      password: String(form.password.value),
-      name: String(form.name.value).trim() || undefined,
-      organization: String(form.organization.value).trim() || undefined,
+      email: String(fd.get("email") ?? "").trim(),
+      password: String(fd.get("password") ?? ""),
+      ...(nameRaw ? { name: nameRaw } : {}),
+      ...(orgRaw ? { organization: orgRaw } : {}),
     };
 
     const res = await fetch("/api/auth/register", {
