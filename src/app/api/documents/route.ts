@@ -1,6 +1,9 @@
 import { mkdir, writeFile } from "fs/promises";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { getDictionary } from "@/i18n/get-dictionary";
+import { getLocale } from "@/i18n/get-locale";
+import { pick } from "@/i18n/pick";
 import { writeAudit } from "@/lib/audit";
 import { extractTextFromUpload } from "@/lib/extractText";
 import { tenantUploadDir } from "@/lib/paths";
@@ -12,6 +15,8 @@ export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   const session = await auth();
+  const locale = await getLocale();
+  const dict = await getDictionary(locale);
   if (!session?.user?.id || !session.tenantId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -25,7 +30,7 @@ export async function POST(request: Request) {
   const title = form.get("title");
 
   if (!(file instanceof File)) {
-    return NextResponse.json({ error: "Fil saknas" }, { status: 400 });
+    return NextResponse.json({ error: pick(dict, "api.fileMissing") }, { status: 400 });
   }
 
   const safeTitle =
@@ -36,7 +41,7 @@ export async function POST(request: Request) {
       where: { id: caseId, tenantId: session.tenantId },
     });
     if (!c) {
-      return NextResponse.json({ error: "Ärende hittades inte" }, { status: 404 });
+      return NextResponse.json({ error: pick(dict, "api.caseNotFound") }, { status: 404 });
     }
   }
 

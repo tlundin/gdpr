@@ -2,8 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import type { UiMessages } from "@/i18n/pick";
+import { pick } from "@/i18n/pick";
 
-export function CreateCaseForm() {
+export function CreateCaseForm({ messages }: { messages: UiMessages }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,8 +24,8 @@ export function CreateCaseForm() {
       }),
     });
     if (!res.ok) {
-      const j = await res.json().catch(() => ({}));
-      setError(j.error ?? "Kunde inte skapa ärende.");
+      const j = (await res.json().catch(() => ({}))) as { error?: string };
+      setError(j.error ?? pick(messages, "casesUi.errCreate"));
       setPending(false);
       return;
     }
@@ -35,11 +37,11 @@ export function CreateCaseForm() {
 
   return (
     <form onSubmit={onSubmit} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-sm font-semibold text-slate-900">Nytt ärende</h2>
+      <h2 className="text-sm font-semibold text-slate-900">{pick(messages, "casesUi.newCaseTitle")}</h2>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label htmlFor="title" className="block text-sm text-slate-700">
-            Rubrik
+            {pick(messages, "casesUi.fieldTitle")}
           </label>
           <input
             id="title"
@@ -50,7 +52,7 @@ export function CreateCaseForm() {
         </div>
         <div>
           <label htmlFor="diaryRef" className="block text-sm text-slate-700">
-            Diarium / referens (valfritt)
+            {pick(messages, "casesUi.fieldDiary")}
           </label>
           <input id="diaryRef" name="diaryRef" className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900" />
         </div>
@@ -61,7 +63,7 @@ export function CreateCaseForm() {
         disabled={pending}
         className="mt-4 rounded-lg bg-sky-700 px-4 py-2 text-sm font-medium text-white hover:bg-sky-800 disabled:opacity-60"
       >
-        {pending ? "Skapar…" : "Skapa ärende"}
+        {pending ? pick(messages, "casesUi.creating") : pick(messages, "casesUi.createSubmit")}
       </button>
     </form>
   );

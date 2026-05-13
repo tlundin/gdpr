@@ -1,7 +1,8 @@
 "use client";
 
 import type { FindingCategory } from "@prisma/client";
-import { categoryLabel, riskLabel } from "@/lib/analysis/category-labels";
+import type { UiMessages } from "@/i18n/pick";
+import { pick } from "@/i18n/pick";
 
 export type FindingRowProps = {
   id: string;
@@ -14,7 +15,16 @@ export type FindingRowProps = {
   shownInExtractedText: boolean;
 };
 
-export function FindingList({ items }: { items: FindingRowProps[] }) {
+function categoryLabelFromDict(messages: UiMessages, c: FindingCategory): string {
+  return pick(messages, `analysis.category.${c}`);
+}
+
+function riskLabelFromDict(messages: UiMessages, n: number): string {
+  const key = Math.min(5, Math.max(1, Math.round(n))) as 1 | 2 | 3 | 4 | 5;
+  return pick(messages, `analysis.risk.${key}`);
+}
+
+export function FindingList({ items, messages }: { items: FindingRowProps[]; messages: UiMessages }) {
   function scrollToHighlight(id: string) {
     const el = document.getElementById(`highlight-${id}`);
     el?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -31,18 +41,18 @@ export function FindingList({ items }: { items: FindingRowProps[] }) {
               <span className="mr-2 inline-flex h-6 min-w-[1.75rem] items-center justify-center rounded bg-sky-100 px-1.5 font-mono text-xs text-sky-900">
                 {f.number}
               </span>
-              {categoryLabel(f.category)}
+              {categoryLabelFromDict(messages, f.category)}
             </span>
             <span className="text-xs text-slate-500">
-              Risk {f.riskScore}/5 ({riskLabel(f.riskScore)})
+              {pick(messages, "finding.riskPrefix")} {f.riskScore}/5 ({riskLabelFromDict(messages, f.riskScore)})
             </span>
           </div>
 
           <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-2 py-2 font-mono text-xs text-slate-800">
             <span className="font-sans text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-              Markerad text
+              {pick(messages, "finding.highlightLabel")}
             </span>
-            <p className="mt-1 whitespace-pre-wrap">{f.excerpt || "(tom passage)"}</p>
+            <p className="mt-1 whitespace-pre-wrap">{f.excerpt || pick(messages, "finding.excerptEmpty")}</p>
           </div>
 
           <p className="mt-2 text-slate-700">{f.rationale}</p>
@@ -55,12 +65,10 @@ export function FindingList({ items }: { items: FindingRowProps[] }) {
                 onClick={() => scrollToHighlight(f.id)}
                 className="text-sm font-medium text-sky-800 underline hover:text-sky-950"
               >
-                Visa i extraherad text ↓
+                {pick(messages, "finding.showInText")}
               </button>
             ) : (
-              <span className="text-xs text-slate-500">
-                Passagen visas som citat ovan; i texten döljs den av en överlappande markering med högre risk.
-              </span>
+              <span className="text-xs text-slate-500">{pick(messages, "finding.overlapNote")}</span>
             )}
           </div>
         </li>

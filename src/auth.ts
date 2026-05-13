@@ -28,8 +28,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Credentials({
       name: "credentials",
       credentials: {
-        email: { label: "E-post", type: "email" },
-        password: { label: "Lösenord", type: "password" },
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
       },
       authorize: async (credentials): Promise<UserWithTenant | null> => {
         const email = credentials?.email as string | undefined;

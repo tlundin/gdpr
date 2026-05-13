@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { BillingSource, Prisma, Role } from "@prisma/client";
 import { z } from "zod";
+import { getLocale } from "@/i18n/get-locale";
 import { prisma } from "@/lib/prisma";
 import { sendVerificationEmail } from "@/lib/send-verification-email";
 
@@ -101,7 +102,7 @@ export async function POST(request: Request) {
     return uid;
   });
 
-  const send = await sendVerificationEmail(email, token);
+  const send = await sendVerificationEmail(email, token, await getLocale());
   if (!send.ok) {
     console.error("[register] user", userId, send.error);
     return NextResponse.json({ error: "email_send_failed", message: send.error }, { status: 503 });

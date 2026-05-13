@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
+import { dateLocaleTag } from "@/i18n/config";
+import { getDictionary } from "@/i18n/get-dictionary";
+import { getLocale } from "@/i18n/get-locale";
+import { pick } from "@/i18n/pick";
 import { pickDisplayFindings } from "@/lib/analysis/normalize";
 import { HighlightedDocumentText } from "@/components/HighlightedDocumentText";
 import { prisma } from "@/lib/prisma";
@@ -18,6 +22,9 @@ export default async function DocumentPage({
   const tenantId = session!.tenantId!;
   const role = session!.role!;
   const { docId } = await params;
+  const locale = await getLocale();
+  const d = await getDictionary(locale);
+  const dateTag = dateLocaleTag(locale);
 
   const doc = await prisma.document.findFirst({
     where: { id: docId, tenantId },
@@ -48,7 +55,6 @@ export default async function DocumentPage({
   ]);
 
   const findings = latestSuccess?.findings ?? [];
-  /** Numreringsordning = dokumentets läsordning (position). */
   const findingsByPosition = [...findings].sort((a, b) => a.startOffset - b.startOffset || a.endOffset - b.endOffset);
   const numberById = new Map(findingsByPosition.map((f, i) => [f.id, i + 1]));
 
@@ -88,67 +94,59 @@ export default async function DocumentPage({
         )}
         <h1 className="mt-3 text-2xl font-semibold text-slate-900">{doc.title}</h1>
         <p className="mt-1 text-sm text-slate-600">
-          {doc.originalFilename} · Uppladdad {doc.createdAt.toLocaleString("sv-SE")} av{" "}
-          {doc.uploadedBy.name ?? doc.uploadedBy.email}
+          {doc.originalFilename} · {pick(d, "document.uploadedPrefix")} {doc.createdAt.toLocaleString(dateTag)}{" "}
+          {pick(d, "document.uploadedBy")} {doc.uploadedBy.name ?? doc.uploadedBy.email}
         </p>
       </div>
 
-      <AnalysisPanel documentId={doc.id} canRun={editable} />
+      <AnalysisPanel documentId={doc.id} canRun={editable} messages={d} />
 
       {latestAttempt?.status === "FAILED" && latestAttempt.errorMessage && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900">
-          <p className="font-medium">Senaste analys misslyckades</p>
+          <p className="font-medium">{pick(d, "document.analysisFailedTitle")}</p>
           <p className="mt-1">{latestAttempt.errorMessage}</p>
         </div>
       )}
 
       {findings.length > 0 && latestSuccess && (
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-900">Senaste analys</h2>
+          <h2 className="text-sm font-semibold text-slate-900">{pick(d, "document.latestTitle")}</h2>
           <p className="mt-1 text-sm text-slate-600">
-            Modell {latestSuccess.model} · {latestSuccess.completedAt?.toLocaleString("sv-SE") ?? ""}
+            {pick(d, "document.latestMetaModel")} {latestSuccess.model} ·{" "}
+            {latestSuccess.completedAt?.toLocaleString(dateTag) ?? ""}
           </p>
-          <p className="mt-2 text-sm text-slate-600">
-            Varje rad har samma nummer som{" "}
-            <span className="font-mono text-slate-800">[N]</span> i den extraherade texten nedan. Under «Markerad text»
-            visas exakt den passage modellen avsett.
-          </p>
+          <p className="mt-2 text-sm text-slate-600">{pick(d, "document.latestHint")}</p>
           {latestSuccess.summary && <p className="mt-3 text-sm text-slate-800">{latestSuccess.summary}</p>}
-          <FindingList items={findingListItems} />
+          <FindingList items={findingListItems} messages={d} />
         </section>
       )}
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-sm font-semibold text-slate-900">Extraherad text</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Markeringar med <span className="font-mono">[N]</span> motsvarar punkten med samma nummer i listan ovan.
-              Vid överlapp visas högst risk; övriga finns kvar som citat i listan.
-            </p>
+            <h2 className="text-sm font-semibold text-slate-900">{pick(d, "document.extractedTitle")}</h2>
+            <p className="mt-1 text-sm text-slate-600">{pick(d, "document.extractedHint")}</p>
           </div>
           <a
             href={`/api/documents/${doc.id}/export`}
             className="shrink-0 rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-800 hover:bg-slate-50"
           >
-            Ladda ner som .txt
+            {pick(d, "document.exportTxt")}
           </a>
         </div>
         <div className="mt-4 max-h-[480px] overflow-auto rounded-lg bg-slate-50 p-4">
           {bodyText.trim() ? (
             <HighlightedDocumentText text={bodyText} spans={displaySpans} />
           ) : (
-            <p className="text-sm text-slate-600">Ingen text kunde extraheras (typen stöds ev. inte ännu).</p>
+            <p className="text-sm text-slate-600">{pick(d, "document.noText")}</p>
           )}
         </div>
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-900">Besluts- och bedömningsanteckningar</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Dokumentera skäl, balanceringsintressen och eventuella utlämningsbeslut enligt er interna process.
-        </p>
-        <DecisionNotesForm documentId={doc.id} initialNotes={doc.decisionNotes ?? ""} readOnly={!editable} />
+        <h2 className="text-sm font-semibold text-slate-900">{pick(d, "document.notesTitle")}</h2>
+        <p className="mt-1 text-sm text-slate-600">{pick(d, "document.notesIntro")}</p>
+        <DecisionNotesForm documentId={doc.id} initialNotes={doc.decisionNotes ?? ""} readOnly={!editable} messages={d} />
       </section>
     </div>
   );

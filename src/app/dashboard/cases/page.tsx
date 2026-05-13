@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { auth } from "@/auth";
+import { getDictionary } from "@/i18n/get-dictionary";
+import { getLocale } from "@/i18n/get-locale";
+import { fill, pick } from "@/i18n/pick";
 import { prisma } from "@/lib/prisma";
 import { canManageCases } from "@/lib/tenant";
 import { CreateCaseForm } from "./ui";
@@ -8,6 +11,8 @@ export default async function CasesPage() {
   const session = await auth();
   const tenantId = session!.tenantId!;
   const role = session!.role!;
+  const locale = await getLocale();
+  const d = await getDictionary(locale);
 
   const cases = await prisma.case.findMany({
     where: { tenantId },
@@ -20,17 +25,15 @@ export default async function CasesPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Ärenden</h1>
-        <p className="mt-1 text-slate-600">
-          Koppla handlingar till ärende och diariumreferens. Skapa nytt ärende om du har behörighet.
-        </p>
+        <h1 className="text-2xl font-semibold text-slate-900">{pick(d, "cases.title")}</h1>
+        <p className="mt-1 text-slate-600">{pick(d, "cases.intro")}</p>
       </div>
 
-      {canManageCases(role) && <CreateCaseForm />}
+      {canManageCases(role) && <CreateCaseForm messages={d} />}
 
       <ul className="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
         {cases.length === 0 && (
-          <li className="px-4 py-8 text-center text-sm text-slate-500">Inga ärenden ännu.</li>
+          <li className="px-4 py-8 text-center text-sm text-slate-500">{pick(d, "cases.empty")}</li>
         )}
         {cases.map((c) => (
           <li key={c.id}>
@@ -40,7 +43,7 @@ export default async function CasesPage() {
             >
               <span className="font-medium text-slate-900">{c.title}</span>
               <span className="text-sm text-slate-500">
-                {c._count.documents} handlingar
+                {fill(pick(d, "cases.list.recordCount"), { count: String(c._count.documents) })}
                 {c.diaryRef ? ` · ${c.diaryRef}` : ""}
               </span>
             </Link>

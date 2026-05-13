@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { LangSwitch } from "@/components/LangSwitch";
 import { LogoutButton } from "@/components/LogoutButton";
+import { getDictionary } from "@/i18n/get-dictionary";
+import { getLocale } from "@/i18n/get-locale";
+import { pick } from "@/i18n/pick";
 import { prisma } from "@/lib/prisma";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -13,6 +17,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect("/login?error=no_tenant");
   }
 
+  const locale = await getLocale();
+  const d = await getDictionary(locale);
+
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
     select: { name: true, slug: true },
@@ -23,26 +30,24 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Tenant</p>
+            <p className="text-xs uppercase tracking-wide text-slate-500">{pick(d, "dashboard.orgLabel")}</p>
             <p className="font-medium text-slate-900">{tenant?.name ?? "—"}</p>
           </div>
           <nav className="flex items-center gap-6 text-sm">
             <Link href="/dashboard" className="text-slate-700 hover:text-sky-800">
-              Översikt
+              {pick(d, "dashboard.navOverview")}
             </Link>
             <Link href="/dashboard/cases" className="text-slate-700 hover:text-sky-800">
-              Ärenden
+              {pick(d, "dashboard.navCases")}
             </Link>
-            <LogoutButton />
+            <LangSwitch locale={locale} dict={{ en: pick(d, "lang.en"), sv: pick(d, "lang.sv") }} />
+            <LogoutButton label={pick(d, "logout.label")} />
           </nav>
         </div>
       </header>
       <div className="mx-auto max-w-6xl px-4 py-8">{children}</div>
       <footer className="border-t border-slate-200 bg-slate-100/80">
-        <div className="mx-auto max-w-6xl px-4 py-4 text-xs text-slate-600">
-          Verktyget ger struktur och spårbarhet; juridisk bedömning och beslut om utlämning ansvarar er
-          organisation alltid för.
-        </div>
+        <div className="mx-auto max-w-6xl px-4 py-4 text-xs text-slate-600">{pick(d, "dashboard.footer")}</div>
       </footer>
     </div>
   );

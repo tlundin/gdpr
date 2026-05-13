@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import type { UiMessages } from "@/i18n/pick";
+import { pick } from "@/i18n/pick";
 
-export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
+export function LoginForm({ messages, callbackUrl }: { messages: UiMessages; callbackUrl?: string }) {
   const [pending, setPending] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -23,7 +25,7 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
     <form onSubmit={onSubmit} className="mt-8 space-y-4">
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-slate-700">
-          E-post
+          {pick(messages, "login.email")}
         </label>
         <input
           id="email"
@@ -36,7 +38,7 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
       </div>
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-slate-700">
-          Lösenord
+          {pick(messages, "login.password")}
         </label>
         <input
           id="password"
@@ -52,12 +54,12 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
         disabled={pending}
         className="w-full rounded-lg bg-sky-700 py-2.5 text-sm font-medium text-white hover:bg-sky-800 disabled:opacity-60"
       >
-        {pending ? "Loggar in…" : "Logga in"}
+        {pending ? pick(messages, "login.submitting") : pick(messages, "login.submit")}
       </button>
       <p className="text-center text-sm text-slate-600">
-        Ny användare?{" "}
+        {pick(messages, "login.createAccountLead")}{" "}
         <Link href="/register" className="font-medium text-sky-800 hover:text-sky-950">
-          Skapa konto
+          {pick(messages, "login.createAccount")}
         </Link>
       </p>
     </form>

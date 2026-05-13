@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import type { UiMessages } from "@/i18n/pick";
+import { pick } from "@/i18n/pick";
 
-export function RegisterForm() {
+export function RegisterForm({ messages }: { messages: UiMessages }) {
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -37,18 +39,18 @@ export function RegisterForm() {
 
     if (!res.ok) {
       if (res.status === 409) {
-        setError("Den här e-postadressen är redan registrerad och verifierad.");
+        setError(pick(messages, "register.err409"));
       } else if (data.error === "validation_error") {
-        setError("Kontrollera att e-post och lösenord (minst 8 tecken) är korrekt ifyllda.");
+        setError(pick(messages, "register.errValidation"));
       } else if (res.status === 503) {
-        setError(data.message ?? "Kunde inte skicka bekräftelsemejl. Försök igen senare.");
+        setError(data.message ?? pick(messages, "register.err503"));
       } else {
-        setError("Något gick fel. Försök igen.");
+        setError(pick(messages, "register.errGeneric"));
       }
       return;
     }
 
-    setMessage("Vi har skickat ett mejl med en bekräftelselänk. Kontrollera inkorgen och skräpposten.");
+    setMessage(pick(messages, "register.success"));
     form.reset();
   }
 
@@ -56,7 +58,7 @@ export function RegisterForm() {
     <form onSubmit={onSubmit} className="mt-8 space-y-4">
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-slate-700">
-          Namn <span className="font-normal text-slate-500">(valfritt)</span>
+          {pick(messages, "register.nameOptional")}
         </label>
         <input
           id="name"
@@ -68,7 +70,7 @@ export function RegisterForm() {
       </div>
       <div>
         <label htmlFor="organization" className="block text-sm font-medium text-slate-700">
-          Organisationsnamn <span className="font-normal text-slate-500">(valfritt)</span>
+          {pick(messages, "register.orgOptional")}
         </label>
         <input
           id="organization"
@@ -76,11 +78,11 @@ export function RegisterForm() {
           type="text"
           className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-sky-600 focus:outline-none focus:ring-1 focus:ring-sky-600"
         />
-        <p className="mt-1 text-xs text-slate-500">Används som tenant-namn i verktyget.</p>
+        <p className="mt-1 text-xs text-slate-500">{pick(messages, "register.orgHint")}</p>
       </div>
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-slate-700">
-          E-post
+          {pick(messages, "register.email")}
         </label>
         <input
           id="email"
@@ -93,7 +95,7 @@ export function RegisterForm() {
       </div>
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-slate-700">
-          Lösenord
+          {pick(messages, "register.password")}
         </label>
         <input
           id="password"
@@ -104,7 +106,7 @@ export function RegisterForm() {
           autoComplete="new-password"
           className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-sky-600 focus:outline-none focus:ring-1 focus:ring-sky-600"
         />
-        <p className="mt-1 text-xs text-slate-500">Minst 8 tecken.</p>
+        <p className="mt-1 text-xs text-slate-500">{pick(messages, "register.passwordHint")}</p>
       </div>
       {error && (
         <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
@@ -119,12 +121,12 @@ export function RegisterForm() {
         disabled={pending}
         className="w-full rounded-lg bg-sky-700 py-2.5 text-sm font-medium text-white hover:bg-sky-800 disabled:opacity-60"
       >
-        {pending ? "Skapar konto…" : "Skapa konto"}
+        {pending ? pick(messages, "register.submitting") : pick(messages, "register.submit")}
       </button>
       <p className="text-center text-sm text-slate-600">
-        Har du redan konto?{" "}
+        {pick(messages, "register.hasAccount")}{" "}
         <Link href="/login" className="font-medium text-sky-800 hover:text-sky-950">
-          Logga in
+          {pick(messages, "register.toLogin")}
         </Link>
       </p>
     </form>
