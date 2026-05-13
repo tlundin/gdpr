@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { LangSwitch } from "@/components/LangSwitch";
 import { LogoutButton } from "@/components/LogoutButton";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getLocale } from "@/i18n/get-locale";
@@ -40,7 +39,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <Link href="/dashboard/cases" className="text-slate-700 hover:text-sky-800">
               {pick(d, "dashboard.navCases")}
             </Link>
-            <LangSwitch locale={locale} dict={{ en: pick(d, "lang.en"), sv: pick(d, "lang.sv") }} />
             <LogoutButton label={pick(d, "logout.label")} />
           </nav>
         </div>

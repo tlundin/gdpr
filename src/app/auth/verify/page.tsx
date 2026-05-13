@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LangSwitch } from "@/components/LangSwitch";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getLocale } from "@/i18n/get-locale";
 import { pick } from "@/i18n/pick";
@@ -20,10 +19,7 @@ export default async function VerifyEmailPage({
   const d = await getDictionary(locale);
 
   return (
-    <div className="relative mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
-      <div className="absolute right-6 top-6">
-        <LangSwitch locale={locale} dict={{ en: pick(d, "lang.en"), sv: pick(d, "lang.sv") }} />
-      </div>
+    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
       <h1 className="text-2xl font-semibold text-slate-900">{pick(d, "verify.title")}</h1>
       <p className="mt-2 text-sm text-slate-600">{pick(d, "verify.intro")}</p>
       <form method="POST" action="/api/auth/verify-email" className="mt-8 space-y-4">

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { SiteHeader } from "@/components/SiteHeader";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getLocale } from "@/i18n/get-locale";
 import { pick } from "@/i18n/pick";
@@ -27,11 +28,15 @@ export default async function RootLayout({
 }>) {
   const locale = await getLocale();
   const htmlLang = locale === "sv" ? "sv" : "en";
+  const messages = await getDictionary(locale);
 
   return (
     <html lang={htmlLang}>
       <body className={`${inter.variable} min-h-screen font-sans antialiased`}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <SiteHeader locale={locale} messages={messages} />
+          {children}
+        </Providers>
       </body>
     </html>
   );
