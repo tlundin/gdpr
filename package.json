@@ -17,6 +17,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@auth/core": "0.37.2",
     "@prisma/client": "^6.7.0",
     "bcryptjs": "^2.4.3",
     "next": "^15.3.2",

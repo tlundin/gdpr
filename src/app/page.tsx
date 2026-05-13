@@ -25,6 +25,12 @@ export default function HomePage() {
         >
           Logga in
         </Link>
+        <Link
+          href="/register"
+          className="rounded-lg border border-slate-300 px-5 py-2.5 text-sm text-slate-800 hover:bg-slate-50"
+        >
+          Skapa konto
+        </Link>
         <Link href="/dashboard" className="rounded-lg border border-slate-300 px-5 py-2.5 text-sm text-slate-800 hover:bg-slate-50">
           Öppna arbetsyta
         </Link>

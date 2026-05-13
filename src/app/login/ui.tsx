@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 
@@ -53,6 +54,12 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
       >
         {pending ? "Loggar in…" : "Logga in"}
       </button>
+      <p className="text-center text-sm text-slate-600">
+        Ny användare?{" "}
+        <Link href="/register" className="font-medium text-sky-800 hover:text-sky-950">
+          Skapa konto
+        </Link>
+      </p>
     </form>
   );
 }

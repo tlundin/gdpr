@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import { CredentialsSignin } from "@auth/core/errors";
 import bcrypt from "bcryptjs";
 import type { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -11,6 +12,14 @@ type UserWithTenant = {
   tenantId?: string;
   role?: Role;
 };
+
+class UnverifiedEmail extends CredentialsSignin {
+  code = "unverified";
+
+  constructor() {
+    super();
+  }
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
@@ -32,6 +41,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return null;
+
+        if (!user.emailVerified) {
+          throw new UnverifiedEmail();
+        }
 
         const membership = await prisma.membership.findFirst({
           where: { userId: user.id },
