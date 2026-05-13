@@ -29,6 +29,11 @@ export default async function LoginPage({
           Ditt konto saknar organisationstillhörighet. Kontakta administratören.
         </p>
       )}
+      {params.error === "expired_token" && (
+        <p className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          Bekräftelselänken har gått ut. Registrera dig igen med samma e-postadress för att få ett nytt mejl.
+        </p>
+      )}
       {params.error === "invalid_token" && (
         <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
           Bekräftelselänken är ogiltig eller har gått ut. Registrera dig igen eller be om nytt mejl.
