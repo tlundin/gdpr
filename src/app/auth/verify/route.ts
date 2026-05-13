@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAppBaseUrl } from "@/lib/app-base-url";
 import { prisma } from "@/lib/prisma";
 
-function redirectToLogin(request: NextRequest, query: string) {
-  const url = new URL("/login", request.url);
+function redirectToLogin(query: string) {
+  const base = getAppBaseUrl().replace(/\/$/, "");
+  const url = new URL(`${base}/login`);
   url.search = query;
   return NextResponse.redirect(url);
 }
@@ -10,7 +12,7 @@ function redirectToLogin(request: NextRequest, query: string) {
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("token");
   if (!token) {
-    return redirectToLogin(request, "error=invalid_token");
+    return redirectToLogin("error=invalid_token");
   }
 
   const row = await prisma.verificationToken.findUnique({
@@ -18,7 +20,7 @@ export async function GET(request: NextRequest) {
   });
 
   if (!row || row.expires < new Date()) {
-    return redirectToLogin(request, "error=invalid_token");
+    return redirectToLogin("error=invalid_token");
   }
 
   const user = await prisma.user.findUnique({
@@ -27,7 +29,7 @@ export async function GET(request: NextRequest) {
 
   if (!user) {
     await prisma.verificationToken.deleteMany({ where: { token } });
-    return redirectToLogin(request, "error=invalid_token");
+    return redirectToLogin("error=invalid_token");
   }
 
   await prisma.$transaction([
@@ -40,5 +42,5 @@ export async function GET(request: NextRequest) {
     }),
   ]);
 
-  return redirectToLogin(request, "verified=1");
+  return redirectToLogin("verified=1");
 }

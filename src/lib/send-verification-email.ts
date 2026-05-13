@@ -9,6 +9,16 @@ type SendResult = { ok: true } | { ok: false; error: string };
  */
 export async function sendVerificationEmail(to: string, token: string): Promise<SendResult> {
   const base = getAppBaseUrl();
+  if (
+    process.env.NODE_ENV === "production" &&
+    (base.startsWith("http://localhost") || base.startsWith("http://127.0.0.1"))
+  ) {
+    return {
+      ok: false,
+      error:
+        "AUTH_URL saknas eller pekar på en lokal adress. Sätt AUTH_URL till den publika HTTPS-adressen (t.ex. https://gdpr.synkserver.net).",
+    };
+  }
   const url = `${base}/auth/verify?token=${encodeURIComponent(token)}`;
   const subject = "Bekräfta din e-postadress";
   const text = `Öppna denna länk för att bekräfta din e-postadress (gäller i 24 timmar):\n\n${url}\n\nOm du inte skapat konto kan du ignorera meddelandet.`;
