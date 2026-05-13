@@ -12,7 +12,7 @@
   "home.register": "Create account",
   "home.workspace": "Open workspace",
   "login.title": "Sign in",
-  "login.intro": "Sign in with email and password. Local: see README for demo.",
+  "login.intro": "Sign in with email and password.",
   "login.email": "Email",
   "login.password": "Password",
   "login.submit": "Sign in",

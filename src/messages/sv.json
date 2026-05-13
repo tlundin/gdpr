@@ -12,7 +12,7 @@
   "home.register": "Skapa konto",
   "home.workspace": "Öppna arbetsyta",
   "login.title": "Logga in",
-  "login.intro": "Logga in med e-post och lösenord. Lokalt: demo enligt README.",
+  "login.intro": "Logga in med e-post och lösenord.",
   "login.email": "E-post",
   "login.password": "Lösenord",
   "login.submit": "Logga in",
