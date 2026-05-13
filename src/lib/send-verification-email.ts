@@ -3,8 +3,9 @@ import { getAppBaseUrl } from "@/lib/app-base-url";
 type SendResult = { ok: true } | { ok: false; error: string };
 
 /**
- * Skickar verifieringslänk. Kräver RESEND_API_KEY + EMAIL_FROM i produktion.
- * Lokalt (NODE_ENV=development) loggas länken om Resend saknas.
+ * Skickar verifieringslänk via Resend när RESEND_API_KEY och EMAIL_FROM är satta.
+ * Annars: i utveckling, eller om ALLOW_EMAIL_LOG_FALLBACK=true, loggas länken och anropet lyckas
+ * (använd endast på privat/staging-maskin — länken syns i serverlogg).
  */
 export async function sendVerificationEmail(to: string, token: string): Promise<SendResult> {
   const base = getAppBaseUrl();
@@ -15,13 +16,24 @@ export async function sendVerificationEmail(to: string, token: string): Promise<
 
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
+  const logFallback =
+    process.env.NODE_ENV === "development" || process.env.ALLOW_EMAIL_LOG_FALLBACK === "true";
 
   if (!apiKey || !from) {
-    if (process.env.NODE_ENV === "development") {
-      console.info("[send-verification-email] RESEND_API_KEY eller EMAIL_FROM saknas. Länk:\n", url);
+    if (logFallback) {
+      console.info(
+        "[send-verification-email] Resend ej konfigurerat. Verifieringslänk (till",
+        to,
+        "):\n",
+        url,
+      );
       return { ok: true };
     }
-    return { ok: false, error: "E-post är inte konfigurerad (RESEND_API_KEY och EMAIL_FROM)." };
+    return {
+      ok: false,
+      error:
+        "E-post är inte konfigurerad. Sätt RESEND_API_KEY och EMAIL_FROM på servern, eller tillfälligt ALLOW_EMAIL_LOG_FALLBACK=true (länk loggas — se systemd/journal).",
+    };
   }
 
   const res = await fetch("https://api.resend.com/emails", {
